@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模拟1-Axios的创建</title>
+</head>
+
+<body>
+    <script>
+        // 构造函数
+        function Axios(config) {
+            //初始化
+            this.defaults = config;
+            this.intercepters = { //拦截器
+                request: {}, //请求拦截
+                response: {} //相应拦截
+            }
+        }
+        // 原型相关方法
+        Axios.prototype.request = function (config) {
+            console.log(`发送了请求，请求类型为:${config.method}`);
+        }
+        Axios.prototype.get = function (config) {
+            return this.request({
+                method: 'GET'
+            })
+        }
+        Axios.prototype.post = function (config) {
+            return this.request({
+                method: 'POST'
+            })
+        }
+
+        //声明函数
+        function createInstance(config) {
+            // 实例一个对象
+            // 此时可以context.get() context.post() 不能context()
+            let context = new Axios(config); //是个对象
+            // 创建请求函数，该方法和上面那种一致，它那个是自己封装过
+            // 此时instance是一个函数，可以直接instance({}) 不能instance.get() .post()
+            let instance = Axios.prototype.request.bind(context); //是个函数
+            //将Axios.prototype上面的方法添加到instance中
+            Object.keys(Axios.prototype).forEach(key => {
+                //这里的key就是request get post
+                //这里加个bind()是为了将request get post的this全都指向到当前这个context
+                instance[key] = Axios.prototype[key].bind(context);
+            })
+
+            // 为instance函数对象添加属性 defaults 和 intercepters
+            Object.keys(context).forEach(key => {
+                //这里的key就是defaults intercepters
+                instance[key] = context[key];
+            })
+            return instance;
+        }
+        //接收创建的对象
+        let axios = createInstance();
+        // 测试
+        axios({
+            method: 'GET'
+        }); //和requset()方法一样的
+        axios({
+            method: 'POST'
+        });
+        axios.get();
+        axios.post();
+    </script>
+</body>
+
+</html>

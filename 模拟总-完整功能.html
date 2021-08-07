@@ -1,8 +1,13 @@
-# 完整源码
+<!DOCTYPE html>
+<html lang="en">
 
-首先`json-server  --delay 1000 db.json   `   
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模拟总-完整功能</title>
+</head>
 
-```html
 <body>
     <button class="send" onclick="send()">发送</button>
     <button class="cancel" onclick="cancelSend()">取消</button>
@@ -92,7 +97,10 @@
                         if (xhr.status >= 200 && xhr.status <= 300) {
                             //状态改为成功，然后将请求结果返回
                             resolve({
+                                config,
                                 data: JSON.parse(xhr.response),
+                                headers: xhr.getAllResponseHeaders(),
+                                request: xhr,
                                 status: xhr.status,
                                 statusText: xhr.statusText
                             });
@@ -128,7 +136,8 @@
             })
             return instance;
         }
-        function send(){
+
+        function send() {
             //每次点击发送时，重新新建一个axios
             const axios = createInstance();
             //设置请求拦截器
@@ -167,13 +176,13 @@
             }).then(res => console.log(res));
         }
         //取消发送
-        function cancelSend(){
+        function cancelSend() {
             if (cancel !== null) {
-                cancel();//改变cancelToken.promise状态
-                cancel = null;//删除cancel
+                cancel(); //改变cancelToken.promise状态
+                cancel = null; //删除cancel
             }
         }
     </script>
 </body>
-```
 
+</html>

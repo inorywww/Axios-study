@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模拟3-拦截器</title>
+</head>
+
+<body>
+    <script>
+        // 1.构造函数
+        function Axios(config) {
+            this.config = config;
+            this.interceptors = {
+                request: new InterceptorManager(),
+                response: new InterceptorManager()
+            };
+        }
+        Axios.prototype.request = function (config) {
+            let promise = Promise.resolve(config);
+            const chains = [dispatchRequest, undefined];
+            //这里直接遍历handlers
+            this.interceptors.request.handlers.forEach(item => chains.unshift(item.fulfilled, item.rejected));
+            this.interceptors.response.handlers.forEach(item => chains.push(item.fulfilled, item.rejected));
+            while (chains.length) {
+                promise = promise.then(chains.shift(), chains.shift());
+            }
+            return promise;
+        }
+
+        // 发送请求
+        function dispatchRequest() {
+            // 直接返回一个成功的promise对象，后面的xhr就不写了
+            return new Promise((resolve, reject) => {
+                resolve({
+                    status: 200,
+                    statusText: "OK"
+                })
+            })
+        }
+
+        function InterceptorManager() {
+            this.handlers = [];
+        }
+        InterceptorManager.prototype.use = function (fulfilled, rejected) {
+            this.handlers.push({
+                fulfilled,
+                rejected
+            })
+        }
+
+        // 创建实例
+        const context = new Axios({});
+        // .创建axios函数
+        const axios = Axios.prototype.request.bind(context);
+        //将config interceptors添加到axios函数上
+        Object.keys(context).forEach(key => {
+            axios[key] = context[key];
+        })
+
+        //设置请求拦截器
+        axios.interceptors.request.use(
+            function (config) {
+                console.log('请求拦截器1号成功');
+                return config
+            },
+            function (err) {
+                console.log('请求拦截器1号失败');
+                return Promise.reject(err);
+            }
+        )
+        axios.interceptors.request.use(
+            function (config) {
+                console.log('请求拦截器2号成功');
+                return config
+            },
+            function (err) {
+                console.log('请求拦截器2号失败');
+                return Promise.reject(err);
+            }
+        )
+
+        //响应拦截器
+        axios.interceptors.response.use(
+            function (config) {
+                console.log('响应拦截器1号成功');
+                return config //注意这里一定要返回config
+            },
+            function (err) {
+                console.log('响应拦截器1号失败');
+                return Promise.reject(err);
+            }
+        )
+        axios.interceptors.response.use(
+            function (config) {
+                console.log('响应拦截器2号成功');
+                return config
+            },
+            function (err) {
+                console.log('响应拦截器2号失败');
+                return Promise.reject(err);
+            }
+        )
+
+        axios({
+            method: 'get',
+            url: 'http://localhost:3000/posts'
+        }).then(res => console.log(res))
+    </script>
+</body>
+
+</html>
